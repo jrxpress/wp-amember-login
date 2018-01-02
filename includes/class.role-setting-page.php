@@ -1,5 +1,5 @@
 <?php
-class Setting_Page
+class Role_Setting_Page
 {
     /**
      * Holds the values to be used in the fields callbacks
@@ -12,17 +12,17 @@ class Setting_Page
      */
     public function __construct()
     {
-        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-        add_action( 'admin_init',  array( $this, 'wp_amember_login_admin_init'));
+        add_action( 'admin_menu', array( $this, 'add_role_setting_page' ) );
+        add_action( 'admin_init',  array( $this, 'init'));
     }
 
-    public function wp_amember_login_admin_init(){
+    public function init(){
 
         register_setting('wp_amember_login', 'wp_amember_login');
 
-        add_settings_section( 'section-credential', __( 'WP AMember Login Settings', 'section-credential' ), 'section_credential_callback', 'wp-amember-login' );
-        add_settings_field( 'field-api-url', __( 'API URL', 'api-url' ), 'field_api_url_callback', 'wp-amember-login', 'section-credential' );
-        add_settings_field( 'field-api-key', __( 'API KEY', 'api-key' ), 'field_api_key_callback', 'wp-amember-login', 'section-credential' );
+        add_settings_section( 'section-credential', __( 'WP AMember Login Role Settings', 'section-role-setting' ), 'section_credential_callback', 'wp-amember-login' );
+        add_settings_field( 'field-api-url', __( 'API URL', 'api-url' ), 'field_api_url_callback', 'wp-amember-login', 'section-role-setting' );
+        add_settings_field( 'field-api-key', __( 'API KEY', 'api-key' ), 'field_api_key_callback', 'wp-amember-login', 'section-role-setting' );
     }
 
     function section_credential_callback() {
@@ -50,26 +50,31 @@ class Setting_Page
     /**
      * Add options page
      */
-    public function add_plugin_page()
+    public function add_role_setting_page()
     {
+      $parent_slug = "wp-amember-login";
       $page_title = __( 'WP AMember Login', 'textdomain' );
-      $menu_title = 'WP AMember Login';
+      $menu_title = 'Role Setting';
       $capability = 'manage_options';
-      $menu_slug = 'wp-amember-login';
-      $function = array( $this, 'page_setting_credential' );
+      $menu_slug = 'wp-amember-login-role';
+      $function = array( $this, 'page_setting_role' );
       $icon_url = '';
       $position = 999;
-      add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
+      add_submenu_page( $parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
     }
 
     /**
      * Options page callback
      */
 
-    public function page_setting_credential(){
+    public function page_setting_role(){
       if ( ! current_user_can( 'manage_options' ) ) {
         return;
       }
+        $aMemberAPI = new AMember_API_Handler();
+        $products = $aMemberAPI->get_all_products();
+        $roles = get_editable_roles();
+
         $inputs = $_POST['wp_amember_login'];
         foreach ($inputs as $input => $value) {
             $result = update_option('wp_amember_login_'.$input, $value);
@@ -80,7 +85,7 @@ class Setting_Page
         }
 
         include( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'views/admin-tab.php' );
-        include( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'views/admin-options.php' );
+        include( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'views/admin-setting-role.php' );
     }
 
 

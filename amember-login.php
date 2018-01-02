@@ -33,10 +33,12 @@ if ( !function_exists( 'add_action' ) ) {
 define( 'WP_AMEMBER_LOGIN__PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 require_once( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'includes/class.amember-api-handler.php' );
 require_once( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'includes/class.setting-page.php' );
+require_once( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'includes/class.role-setting-page.php' );
 
-if( is_admin() )
-    $my_settings_page = new Setting_Page();
-
+if( is_admin() ){
+    $setting_page = new Setting_Page();
+		$role_setting_page = new Role_Setting_Page();
+}
 add_action('wp_authenticate', 'wp_amember_login_authenticate');
 
 function wp_amember_login_authenticate(){
