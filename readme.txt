@@ -46,6 +46,10 @@ Thanks for asking!  Please do share back code modifications or enhancements you 
 
 
 == Changelog ==
+= 1.3.1 =
+* Auto create User. No more import user.
+* New Mapping Feature. Map Subscribed Product to WordPress Role
+
 = 1.0.0 =
 * Initial
 * You can login with your AMember credentials
