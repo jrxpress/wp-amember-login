@@ -7,6 +7,7 @@ class Role_Setting_Page
     private $options;
     private $option_fields = ['api_key', 'api_url'];
     private $option_prefix = 'wp_amember_login_';
+    private $roles_mapping = [];
     /**
      * Start up
      */
@@ -75,23 +76,74 @@ class Role_Setting_Page
         $products = $aMemberAPI->get_all_products();
         $roles = get_editable_roles();
 
-        $inputs = $_POST['wp_amember_login'];
-        foreach ($inputs as $input => $value) {
-            $result = update_option('wp_amember_login_'.$input, $value);
+        if(count($_POST) > 0){
+            $this->save_role_record($_POST);
         }
+
+        if(array_key_exists('action', $_GET) && $_GET['action'] == 'delete-role'){
+            $this->delete_role_mapping($_GET['id']);
+        }
+
         // Set class property
         foreach ($this->option_fields as $key => $value) {
             $this->options[$value] = get_option( $this->option_prefix.$value );
         }
+        $this->roles_mapping = $this->load_roles_mapping_data();
 
         include( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'views/admin-tab.php' );
         include( WP_AMEMBER_LOGIN__PLUGIN_DIR . 'views/admin-setting-role.php' );
     }
 
+    public function delete_role_mapping($id){
+        global $wpdb;
+        //table not in database. Create new table
+        $charset_collate = $wpdb->get_charset_collate();
+        $table_name = $wpdb->prefix.'amember_login_role';
+        $wpdb->delete( $table_name, array( 'ID' => $id ) );
+        return;
+    }
 
-    public function wp_amember_login_setting($args){
-        var_dump($args);
-        die();
+    public function get_roles_mapping(){
+        return $this->roles_mapping;
+    }
+    public function save_role_record($data){
+      global $wpdb;
+
+      $table_name = $wpdb->prefix.'amember_login_role';
+      if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+        $this->create_db_role();
+      }
+      $data = ($data['wp_amember_login']);
+      $wpdb->insert($wpdb->prefix.'amember_login_role', array(
+          'amember_product' => $data['amember_product'],
+          'wordpress_role' => $data['wordpress_role']
+      ));
+    }
+
+    public function create_db_role(){
+      global $wpdb;
+      //table not in database. Create new table
+      $charset_collate = $wpdb->get_charset_collate();
+      $table_name = $wpdb->prefix.'amember_login_role';
+
+      $sql = "CREATE TABLE $table_name (
+           id mediumint(9) NOT NULL AUTO_INCREMENT,
+           amember_product varchar(63) NOT NULL,
+           wordpress_role varchar(63) NOT NULL,
+           UNIQUE KEY id (id)
+      ) $charset_collate;";
+      require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+      dbDelta( $sql );
+      return;
+    }
+
+    public function load_roles_mapping_data(){
+        global $wpdb;
+        //table not in database. Create new table
+        $charset_collate = $wpdb->get_charset_collate();
+        $table_name = $wpdb->prefix.'amember_login_role';
+        $results = $wpdb->get_results( "SELECT * FROM {$table_name}", OBJECT );
+        return $results;
     }
     /**
      * Register and add settings

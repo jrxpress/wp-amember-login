@@ -70,10 +70,13 @@ class Setting_Page
       if ( ! current_user_can( 'manage_options' ) ) {
         return;
       }
-        $inputs = $_POST['wp_amember_login'];
-        foreach ($inputs as $input => $value) {
-            $result = update_option('wp_amember_login_'.$input, $value);
+        if(array_key_exists('wp_amember_login', $_POST)){
+            $inputs = $_POST['wp_amember_login'];
+            foreach ($inputs as $input => $value) {
+                $result = update_option('wp_amember_login_'.$input, $value);
+            }
         }
+
         // Set class property
         foreach ($this->option_fields as $key => $value) {
             $this->options[$value] = get_option( $this->option_prefix.$value );

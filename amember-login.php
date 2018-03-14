@@ -48,31 +48,65 @@ function wp_amember_login_authenticate(){
     $amember_api_handler = new AMember_API_Handler();
     $login_information = json_decode($amember_api_handler->login($username, $password));
 
+
+
     if($login_information->ok){
+
         $user = get_user_by('login', $login_information->login);
-
-        if ( !is_wp_error( $user ) ){
-            wp_clear_auth_cookie();
-            wp_set_current_user ( $user->ID );
-            wp_set_auth_cookie  ( $user->ID );
-
-            wp_redirect(get_site_url());
-            echo json_encode(array('error_code'=>0));
-            exit();
+        if ( !$user){
+					$user = wp_amember_create_user($login_information);
         } else {
-            wp_redirect(get_site_url().'/wp-login');
-            echo json_encode(array('error_code'=>1));
-            exit();
-        }
+			$user = wp_amember_update_user($login_information);
+		}
+				wp_amember_login_authenticate_user($user);
     }
+		return;
 }
 
-function wp_amember_create_user(){
+function wp_amember_login_authenticate_user($user){
+	wp_clear_auth_cookie();
+	wp_set_current_user ( $user->ID );
+	wp_set_auth_cookie  ( $user->ID );
 
+	wp_redirect(get_site_url());
+	echo json_encode(array('error_code'=>0));
+	exit();
 }
 
+function get_wordpress_role_by_amember_product($id){
+	global $wpdb;
+	//table not in database. Create new table
+	$charset_collate = $wpdb->get_charset_collate();
+	$table_name = $wpdb->prefix.'amember_login_role';
+	$results = $wpdb->get_results( "SELECT * FROM {$table_name} WHERE product_id = {$id}", OBJECT );
+	return $results;
+}
 
+function wp_amember_create_user($login_information){
+	$random_password = wp_generate_password( $length=12, $include_standard_special_chars=false );
+	$user_id = wp_create_user( $login_information->login, $random_password, $login_information->name );
+	return wp_amember_update_user($login_information);
+}
 
-  function wp_amember_login_settings(){
+function wp_amember_update_user($login_information){
+	$user = get_user_by('login', $login_information->login);
+	$id_product = wp_amember_login_get_product_subcription($login_information);
 
-  }
+	$user->roles = get_wordpress_role_by_amember_product($id_product);
+	$user->first_name = $login_information->name_f;
+	$user->last_name = $login_information->name_l;
+	$user->user_email = $login_information->email;
+	wp_update_user($user);
+	return $user;
+}
+
+function wp_amember_login_get_product_subcription($login_information){
+	$id_product = 0;
+	foreach($login_information->subscriptions as $key => $value){
+		$id_product = $key;
+	}
+	return $id_product;
+}
+function wp_amember_login_settings(){
+
+}

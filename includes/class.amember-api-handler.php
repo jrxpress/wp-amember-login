@@ -4,8 +4,8 @@ class AMember_API_Handler {
     /**
      * @const string of url target api endpoint and target API key
      */
-    static $target_url;
-    static $target_api_key;
+    public $target_url;
+    public $target_api_key;
 
     public function __construct() {
   		$this->directory_path = plugin_dir_path( dirname( __FILE__ ) );
